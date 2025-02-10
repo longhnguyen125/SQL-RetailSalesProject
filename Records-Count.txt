@@ -1,0 +1,16 @@
+USE master
+GO
+
+USE [RETAIL SALES]
+GO 
+
+
+SELECT 
+    OBJECT_NAME(object_id) AS [Table], 
+    SUM(row_count) AS [Total of Records]
+FROM sys.dm_db_partition_stats
+WHERE index_id IN (0, 1)
+AND OBJECT_NAME(object_id) IN ('CUSTOMER', 'INVOICE', 'ITEMS SHIPPED', 'ORDERED PRODUCTS', 
+                               'PRODUCT', 'PURCHASE ORDER', 'SHIP METHODS', 'SHIPMENT', 'SHIPTO')
+GROUP BY OBJECT_NAME(object_id)
+ORDER BY [TABLE];
