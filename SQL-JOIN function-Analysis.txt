@@ -1,0 +1,84 @@
+SQL Analysis
+
+-- 1. SQL query that retrieves all records but no duplicate from PRODUCT and SHIP METHODS 
+to show which ship methods have been used for which products.
+
+SELECT DISTINCT 
+	SM.*
+	,P.pName
+FROM [SHIP METHODS] SM FULL JOIN [PURCHASE ORDER] PO
+		ON SM.shipCode = PO.shipCode
+	LEFT JOIN [ORDERED PRODUCTS] OP
+		ON (PO.PONum = OP.PONum
+		AND PO.accountNum = OP.accountNum
+		)
+	FULL JOIN PRODUCT P
+		ON OP.productNo = P.productNo
+
+-- 2. SQL query to show a table with columns showing customer product order history:
+PONum, accountNum, fName, lName, datePlaced, productNo, qtyOrdered, unitPrice.
+
+SELECT PO.PONum
+	, C.accountNum
+	, C.fName
+	, C.lName
+	, PO.datePlaced
+	, P.productNo
+	, OP.qtyOrdered
+	, OP.unitPrice
+FROM [PURCHASE ORDER] PO LEFT JOIN CUSTOMER C
+		ON PO.accountNum = C.accountNum
+	 LEFT JOIN [ORDERED PRODUCTS] OP
+		ON ( OP.PONum = PO.PONum
+			AND OP.accountNum = PO.accountNum
+			)
+	LEFT JOIN PRODUCT P
+		ON P.productNo =OP.productNo
+
+-- 3. Find the distinct shipping codes (shipCode) for purchase orders placed on weekends (datePlaced) 
+where the expected delivery date (exptectedDel) is NOT on a Thursday or Friday.
+
+SELECT DISTINCT PO.shipCode
+FROM [PURCHASE ORDER] PO
+WHERE DATENAME(DW, PO.datePlaced) IN ('Saturday', 'Sunday')
+	AND DATENAME(DW, PO.exptectedDel) NOT IN ('Thursday', 'Friday')
+
+
+-- 4. Retrieve all columns from the CUSTOMER table for customers where either their first and last name (fName, lName) 
+or their telephone number and email (telNum, email) do not match the corresponding values in the SHIPTO table.
+
+SELECT C.*
+FROM CUSTOMER C JOIN SHIPTO S
+	ON C.accountNum = S.accountNum
+WHERE (C.fName <> S.fName
+		AND C.lName <> S.lName)
+	OR (C.telNum <> S.telNum
+		AND C.email <> S.email)
+
+
+-- 5. SQL query to retrieve only customers whose city starts with C, K, or L but does not end with N, and whose zip code contains both 7 and 0 in any order or ends with 1.
+Then rename those columns as the following:
+Customer Account: accountNum from the CUSTOMER table.
+Full Name: Combination of fName, mInitial, and lName.
+Purchase Order Number: PONum.
+Order Month: Month name from datePlaced.
+Order Year: Year from datePlaced. 
+Total Additional Cost: Sum of shippingCost, taxAmount, and otherAdjustments.
+
+SELECT C.accountNum AS [Customer Account]
+	, C.fName + ' ' + C.mInitial +' '+ C.lName AS [Full Name]
+	, PO.PONum AS [Purchase Order Number]
+	, DATENAME(MM, PO.datePlaced) AS [Order Month]
+	, DATENAME(YY, PO.datePlaced) AS [Order Year]
+	, (PO.shippingCost + PO.taxAmount + PO.otherAdjustments) AS [Total Additional Cost]
+FROM CUSTOMER C FULL JOIN [PURCHASE ORDER] PO
+	ON C.accountNum = PO.accountNum
+WHERE (C.city LIKE '[CKL]%[^N]')
+	AND 
+	((C.zipCode LIKE '%7%' 
+	AND C.zipCode LIKE'%0%')
+	OR 
+	C.zipCode LIKE '%1')
+
+
+
